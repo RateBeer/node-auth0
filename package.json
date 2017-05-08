@@ -5,9 +5,11 @@
   "main": "src/index.js",
   "scripts": {
     "test": "mocha -R spec $(find ./test -name *.tests.js)",
-    "test:ci": "istanbul cover _mocha --report lcovonly -R $(find ./test -name *.tests.js) -- -R mocha-multi --reporter-options spec=-,mocha-junit-reporter=-",
+    "test:ci":
+      "istanbul cover _mocha --report lcovonly -R $(find ./test -name *.tests.js) -- -R mocha-multi --reporter-options spec=-,mocha-junit-reporter=-",
     "test:coverage": "codecov",
-    "test:watch": "NODE_ENV=test mocha --timeout 5000 $(find ./test -name *.tests.js) --watch",
+    "test:watch":
+      "NODE_ENV=test mocha --timeout 5000 $(find ./test -name *.tests.js) --watch",
     "jsdoc:generate": "jsdoc --configure .jsdoc.json --verbose",
     "release:clean": "node scripts/cleanup.js",
     "preversion": "node scripts/prepare.js",
@@ -18,10 +20,7 @@
     "type": "git",
     "url": "https://github.com/auth0/node-auth0"
   },
-  "keywords": [
-    "auth0",
-    "api"
-  ],
+  "keywords": ["auth0", "api"],
   "author": "Auth0",
   "license": "MIT",
   "bugs": {
@@ -29,12 +28,15 @@
   },
   "homepage": "https://github.com/auth0/node-auth0",
   "dependencies": {
+    "base-64": "0.1.0",
     "bluebird": "^2.10.2",
     "lru-memoizer": "^1.11.1",
     "object.assign": "^4.0.4",
     "request": "^2.83.0",
-    "rest-facade": "^1.10.1",
-    "retry": "^0.10.1"
+    "retry": "^0.10.1",
+    "rest-facade": "RateBeer/rest-facade#v1.10.2",
+    "url-join": "4.0.0",
+    "util": "RateBeer/react-native-util#v1.0.3"
   },
   "devDependencies": {
     "chai": "^2.2.0",

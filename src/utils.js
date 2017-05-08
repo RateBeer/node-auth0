@@ -1,5 +1,5 @@
 var Promise = require('bluebird');
-var request = require('request');
+var base64 = require('base-64');
 
 
 /**
@@ -15,10 +15,7 @@ var utils = module.exports = {};
  * @memberOf  module:utils
  */
 utils.jsonToBase64 = function (json) {
-  var bytes = new Buffer(JSON.stringify(json));
-
-  return bytes
-    .toString('base64')
+  return base64.encode(JSON.stringify(json))
     .replace(/\+/g, '-')
     .replace(/\//g, '_')
     .replace(/=+$/, '');
@@ -56,11 +53,9 @@ utils.wrapPropertyMethod = function (Parent, name, propertyMethod) {
  */
 utils.getRequestPromise = function (settings) {
   return new Promise(function (resolve, reject) {
-    request({
-      url: settings.url,
+    fetch(settings.url, {
       method: settings.method,
       body: settings.data,
-      json: typeof settings.data === 'object',
       headers: settings.headers
     }, function (err, res, body) {
        if (err) {
@@ -70,6 +65,5 @@ utils.getRequestPromise = function (settings) {
 
       resolve(res.body);
     });
-    
   });
 }

@@ -1,5 +1,8 @@
 /** @module auth **/
 
+process = process || {}
+process.version = process.version || 'react-native'
+
 var util = require('util');
 
 var pkg = require('../../package.json');
