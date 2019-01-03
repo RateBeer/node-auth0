@@ -38,7 +38,7 @@
     "object.assign": "^4.0.4",
     "request": "^2.83.0",
     "retry": "^0.10.1",
-    "rest-facade": "RateBeer/rest-facade#v1.10.2",
+    "rest-facade": "RateBeer/rest-facade#v1.10.3",
     "url-join": "4.0.0",
     "util": "RateBeer/react-native-util#v1.0.3"
   },
