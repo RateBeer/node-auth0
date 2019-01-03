@@ -8,7 +8,6 @@ var RetryRestClient = require('../RetryRestClient');
  * @see https://github.com/ngonzalvez/rest-facade
  */
 
-
 /**
  * @class
  * Abstracts interaction with the users endpoint.
@@ -20,7 +19,7 @@ var RetryRestClient = require('../RetryRestClient');
  * @param {Object} [options.headers]  Headers to be included in all requests.
  * @param {Object} [options.retry]    Retry Policy Config
  */
-var UsersManager = function (options){
+var UsersManager = function(options) {
   if (options === null || typeof options !== 'object') {
     throw new ArgumentError('Must provide manager options');
   }
@@ -38,8 +37,12 @@ var UsersManager = function (options){
     headers: options.headers,
     query: { repeatParams: false }
   };
-  
-  var usersAuth0RestClient = new Auth0RestClient(options.baseUrl + '/users/:id', clientOptions, options.tokenProvider);
+
+  var usersAuth0RestClient = new Auth0RestClient(
+    options.baseUrl + '/users/:id',
+    clientOptions,
+    options.tokenProvider
+  );
   this.users = new RetryRestClient(usersAuth0RestClient, options.retry);
 
   /**
@@ -49,7 +52,11 @@ var UsersManager = function (options){
    *
    * @type {external:RestClient}
    */
-  var multifactorAuth0RestClient = new Auth0RestClient(options.baseUrl + '/users/:id/multifactor/:provider', clientOptions, options.tokenProvider);
+  var multifactorAuth0RestClient = new Auth0RestClient(
+    options.baseUrl + '/users/:id/multifactor/:provider',
+    clientOptions,
+    options.tokenProvider
+  );
   this.multifactor = new RetryRestClient(multifactorAuth0RestClient, options.retry);
 
   /**
@@ -57,7 +64,11 @@ var UsersManager = function (options){
    *
    * @type {external:RestClient}
    */
-  var identitiesAuth0RestClient = new Auth0RestClient(options.baseUrl + '/users/:id/identities/:provider/:user_id', clientOptions, options.tokenProvider);
+  var identitiesAuth0RestClient = new Auth0RestClient(
+    options.baseUrl + '/users/:id/identities/:provider/:user_id',
+    clientOptions,
+    options.tokenProvider
+  );
   this.identities = new RetryRestClient(identitiesAuth0RestClient, options.retry);
 
   /**
@@ -65,7 +76,11 @@ var UsersManager = function (options){
    *
    * @type {external:RestClient}
    */
-  var userLogsAuth0RestClient = new Auth0RestClient(options.baseUrl + '/users/:id/logs', clientOptions, options.tokenProvider);
+  var userLogsAuth0RestClient = new Auth0RestClient(
+    options.baseUrl + '/users/:id/logs',
+    clientOptions,
+    options.tokenProvider
+  );
   this.userLogs = new RetryRestClient(userLogsAuth0RestClient, options.retry);
 
   /**
@@ -73,7 +88,11 @@ var UsersManager = function (options){
    *
    * @type {external:RestClient}
    */
-  var enrollmentsAuth0RestClient = new Auth0RestClient(options.baseUrl + '/users/:id/enrollments', clientOptions, options.tokenProvider);
+  var enrollmentsAuth0RestClient = new Auth0RestClient(
+    options.baseUrl + '/users/:id/enrollments',
+    clientOptions,
+    options.tokenProvider
+  );
   this.enrollments = new RetryRestClient(enrollmentsAuth0RestClient, options.retry);
 
   /**
@@ -81,10 +100,28 @@ var UsersManager = function (options){
    *
    * @type {external:RestClient}
    */
-  var usersByEmailClient = new Auth0RestClient(options.baseUrl + '/users-by-email', clientOptions, options.tokenProvider);
+  var usersByEmailClient = new Auth0RestClient(
+    options.baseUrl + '/users-by-email',
+    clientOptions,
+    options.tokenProvider
+  );
   this.usersByEmail = new RetryRestClient(usersByEmailClient, options.retry);
-};
 
+  /**
+   * Provides an abstraction layer for regenerating Guardian recovery codes.
+   *
+   * @type {external:RestClient}
+   */
+  var recoveryCodeRegenerationAuth0RestClients = new Auth0RestClient(
+    options.baseUrl + '/users/:id/recovery-code-regeneration',
+    clientOptions,
+    options.tokenProvider
+  );
+  this.recoveryCodeRegenerations = new RetryRestClient(
+    recoveryCodeRegenerationAuth0RestClients,
+    options.retry
+  );
+};
 
 /**
  * Create a new user.
@@ -106,14 +143,13 @@ var UsersManager = function (options){
  *
  * @return  {Promise|undefined}
  */
-UsersManager.prototype.create = function (data, cb) {
+UsersManager.prototype.create = function(data, cb) {
   if (cb && cb instanceof Function) {
     return this.users.create(data, cb);
   }
 
   return this.users.create(data);
 };
-
 
 /**
  * Get all users.
@@ -123,27 +159,28 @@ UsersManager.prototype.create = function (data, cb) {
  *
  * @example <caption>
  *   This method takes an optional object as first argument that may be used to
- *   specify pagination settings and the search query.
+ *   specify pagination settings and the search query. If pagination options are
+ *   not present, the first page of a limited number of results will be returned.
  * </caption>
  *
  * // Pagination settings.
  * var params = {
  *   per_page: 10,
- *   page: 2
+ *   page: 0
  * };
  *
- * management.users.getAll(function (err, users) {
+ * management.users.getAll(params, function (err, users) {
  *   console.log(users.length);
  * });
  *
  * @param   {Object}    [params]          Users params.
- * @param   {Number}    [params.per_page] Number of users per page.
- * @param   {Number}    [params.page]     Page number.
+ * @param   {Number}    [params.per_page] Number of results per page.
+ * @param   {Number}    [params.page]     Page number, zero indexed.
  * @param   {Function}  [cb]              Callback function.
  *
  * @return  {Promise|undefined}
  */
-UsersManager.prototype.getAll = function (params) {
+UsersManager.prototype.getAll = function(params) {
   return this.users.getAll.apply(this.users, arguments);
 };
 
@@ -167,10 +204,9 @@ UsersManager.prototype.getAll = function (params) {
  *
  * @return  {Promise|undefined}
  */
-UsersManager.prototype.getByEmail = function (email, callback) {
+UsersManager.prototype.getByEmail = function(email, callback) {
   return this.usersByEmail.getAll({ email }, callback);
 };
-
 
 /**
  * Get a user by its id.
@@ -189,10 +225,9 @@ UsersManager.prototype.getByEmail = function (email, callback) {
  *
  * @return  {Promise|undefined}
  */
-UsersManager.prototype.get = function () {
+UsersManager.prototype.get = function() {
   return this.users.get.apply(this.users, arguments);
 };
-
 
 /**
  * Update a user by its id.
@@ -219,10 +254,9 @@ UsersManager.prototype.get = function () {
  *
  * @return  {Promise|undefined}
  */
-UsersManager.prototype.update = function () {
+UsersManager.prototype.update = function() {
   return this.users.patch.apply(this.users, arguments);
 };
-
 
 /**
  * Update the user metadata.
@@ -252,7 +286,7 @@ UsersManager.prototype.update = function () {
  *
  * @return  {Promise|undefined}
  */
-UsersManager.prototype.updateUserMetadata = function (params, metadata, cb) {
+UsersManager.prototype.updateUserMetadata = function(params, metadata, cb) {
   var data = {
     user_metadata: metadata
   };
@@ -263,7 +297,6 @@ UsersManager.prototype.updateUserMetadata = function (params, metadata, cb) {
 
   return this.users.patch(params, data);
 };
-
 
 /**
  * Update the app metadata.
@@ -293,7 +326,7 @@ UsersManager.prototype.updateUserMetadata = function (params, metadata, cb) {
  *
  * @return  {Promise|undefined}
  */
-UsersManager.prototype.updateAppMetadata = function (params, metadata, cb) {
+UsersManager.prototype.updateAppMetadata = function(params, metadata, cb) {
   var data = {
     app_metadata: metadata
   };
@@ -304,7 +337,6 @@ UsersManager.prototype.updateAppMetadata = function (params, metadata, cb) {
 
   return this.users.patch(params, data);
 };
-
 
 /**
  * Delete a user by its id.
@@ -328,14 +360,13 @@ UsersManager.prototype.updateAppMetadata = function (params, metadata, cb) {
  *
  * @return  {Promise|undefined}
  */
-UsersManager.prototype.delete = function (params) {
+UsersManager.prototype.delete = function(params) {
   if (typeof params !== 'object' || typeof params.id !== 'string') {
     throw new ArgumentError('You must provide an id for the delete method');
   }
 
   return this.users.delete.apply(this.users, arguments);
 };
-
 
 /**
  * Delete all users.
@@ -355,8 +386,10 @@ UsersManager.prototype.delete = function (params) {
  * @param   {Function}  [cb]        Callback function
  *
  * @return  {Promise|undefined}
+ *
+ * @deprecated This method will be removed in the next major release.
  */
-UsersManager.prototype.deleteAll = function (cb) {
+UsersManager.prototype.deleteAll = function(cb) {
   if (typeof cb !== 'function') {
     var errorMsg = 'The deleteAll method only accepts a callback as argument';
 
@@ -365,7 +398,6 @@ UsersManager.prototype.deleteAll = function (cb) {
 
   return this.users.delete.apply(this.users, arguments);
 };
-
 
 /**
  * Delete a multifactor provider.
@@ -391,7 +423,7 @@ UsersManager.prototype.deleteAll = function (cb) {
  *
  * @return  {Promise|undefined}
  */
-UsersManager.prototype.deleteMultifactorProvider = function (params, cb) {
+UsersManager.prototype.deleteMultifactorProvider = function(params, cb) {
   params = params || {};
 
   if (!params.id || typeof params.id !== 'string') {
@@ -409,7 +441,6 @@ UsersManager.prototype.deleteMultifactorProvider = function (params, cb) {
   return this.multifactor.delete(params);
 };
 
-
 /**
  * Link the user with another account.
  *
@@ -417,13 +448,13 @@ UsersManager.prototype.deleteMultifactorProvider = function (params, cb) {
  * @memberOf  module:management.UsersManager.prototype
  *
  * @example
- * var params = { id: USER_ID };
- * var data = {
- * 	user_id: 'OTHER_USER_ID',
- * 	connection_id: 'CONNECTION_ID'
+ * var userId = 'USER_ID';
+ * var params = {
+ *   user_id: 'OTHER_USER_ID',
+ *   connection_id: 'CONNECTION_ID'
  * };
  *
- * management.users.link(params, data, function (err, user) {
+ * management.users.link(userId, params, function (err, user) {
  *   if (err) {
  *     // Handle error.
  *   }
@@ -439,13 +470,16 @@ UsersManager.prototype.deleteMultifactorProvider = function (params, cb) {
  *
  * @return  {Promise|undefined}
  */
-UsersManager.prototype.link = function (userId, params, cb) {
+UsersManager.prototype.link = function(userId, params, cb) {
   var query = { id: userId };
   params = params || {};
 
   // Require a user ID.
-  if (!userId || typeof userId !== 'string') {
+  if (!userId) {
     throw new ArgumentError('The userId cannot be null or undefined');
+  }
+  if (typeof userId !== 'string') {
+    throw new ArgumentError('The userId has to be a string');
   }
 
   if (cb && cb instanceof Function) {
@@ -454,7 +488,6 @@ UsersManager.prototype.link = function (userId, params, cb) {
 
   return this.identities.create(query, params);
 };
-
 
 /**
  * Unlink the given accounts.
@@ -481,7 +514,7 @@ UsersManager.prototype.link = function (userId, params, cb) {
  *
  * @return {Promise|undefined}
  */
-UsersManager.prototype.unlink = function (params, cb) {
+UsersManager.prototype.unlink = function(params, cb) {
   params = params || {};
 
   if (!params.id || typeof params.id !== 'string') {
@@ -522,15 +555,15 @@ UsersManager.prototype.unlink = function (params, cb) {
  *
  * @param   {Object}    params                Get logs data.
  * @param   {String}    params.id             User id.
- * @param   {Number}    params.per_page       Number of logs per page.
- * @param   {Number}    params.page           Page number.
+ * @param   {Number}    params.per_page       Number of results per page.
+ * @param   {Number}    params.page           Page number, zero indexed.
  * @param   {String}    params.sort           The field to use for sorting. Use field:order where order is 1 for ascending and -1 for descending. For example date:-1.
  * @param   {Boolean}   params.include_totals true if a query summary must be included in the result, false otherwise. Default false;
  * @param   {Function}  [cb]                  Callback function.
  *
  * @return {Promise|undefined}
  */
-UsersManager.prototype.logs = function (params, cb) {
+UsersManager.prototype.logs = function(params, cb) {
   params = params || {};
 
   if (!params.id || typeof params.id !== 'string') {
@@ -557,8 +590,37 @@ UsersManager.prototype.logs = function (params, cb) {
  *
  * @return  {Promise|undefined}
  */
-UsersManager.prototype.getGuardianEnrollments = function () {
+UsersManager.prototype.getGuardianEnrollments = function() {
   return this.enrollments.get.apply(this.enrollments, arguments);
+};
+
+/**
+ * Generate new Guardian recovery code.
+ *
+ * @method    regenerateRecoveryCode
+ * @memberOf  module:management.UsersManager.prototype
+ *
+ * @example
+ * management.users.regenerateRecoveryCode("USER_ID", function (err, result) {
+ *   console.log(result.recovery_code);
+ * });
+ *
+ * @param   {Object}    params                Get logs data.
+ * @param   {String}    params.id             User id.
+ * @param   {Function}  [cb]                  Callback function.
+ *
+ * @return  {Promise|undefined}
+ */
+UsersManager.prototype.regenerateRecoveryCode = function(params, cb) {
+  if (!params || !params.id) {
+    throw new ArgumentError('The userId cannot be null or undefined');
+  }
+
+  if (cb && cb instanceof Function) {
+    return this.recoveryCodeRegenerations.create(params, {}, cb);
+  }
+
+  return this.recoveryCodeRegenerations.create(params, {});
 };
 
 module.exports = UsersManager;

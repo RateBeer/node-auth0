@@ -16,7 +16,7 @@ var RetryRestClient = require('../RetryRestClient');
  * @param {Object} [options.headers]  Headers to be included in all requests.
  * @param {Object} [options.retry]    Retry Policy Config
  */
-var ClientGrantsManager = function (options) {
+var ClientGrantsManager = function(options) {
   if (options === null || typeof options !== 'object') {
     throw new ArgumentError('Must provide client options');
   }
@@ -46,10 +46,13 @@ var ClientGrantsManager = function (options) {
    *
    * @type {external:RestClient}
    */
-  var auth0RestClient = new Auth0RestClient(options.baseUrl + '/client-grants/:id', clientOptions, options.tokenProvider);
+  var auth0RestClient = new Auth0RestClient(
+    options.baseUrl + '/client-grants/:id',
+    clientOptions,
+    options.tokenProvider
+  );
   this.resource = new RetryRestClient(auth0RestClient, options.retry);
 };
-
 
 /**
  * Create an Auth0 client grant.
@@ -73,24 +76,37 @@ var ClientGrantsManager = function (options) {
  */
 utils.wrapPropertyMethod(ClientGrantsManager, 'create', 'resource.create');
 
-
 /**
  * Get all Auth0 Client Grants.
  *
  * @method    getAll
  * @memberOf  module:management.ClientGrantsManager.prototype
  *
- * @example
- * management.clientGrants.getAll(function (err, grants) {
+ * @example <caption>
+ *   This method takes an optional object as first argument that may be used to
+ *   specify pagination settings. If pagination options are not present,
+ *   the first page of a limited number of results will be returned.
+ * </caption>
+ *
+ * // Pagination settings.
+ * var params = {
+ *   per_page: 10,
+ *   page: 0
+ * };
+ *
+ *
+ * management.clientGrants.getAll(params, function (err, grants) {
  *   console.log(grants.length);
  * });
  *
- * @param   {Function}  [cb]    Callback function.
+ * @param   {Object}    [params]          Client Grants parameters.
+ * @param   {Number}    [params.per_page] Number of results per page.
+ * @param   {Number}    [params.page]     Page number, zero indexed.
+ * @param   {Function}  [cb]              Callback function.
  *
  * @return  {Promise|undefined}
  */
 utils.wrapPropertyMethod(ClientGrantsManager, 'getAll', 'resource.getAll');
-
 
 /**
  * Update an Auth0 client grant.
@@ -123,7 +139,6 @@ utils.wrapPropertyMethod(ClientGrantsManager, 'getAll', 'resource.getAll');
  */
 utils.wrapPropertyMethod(ClientGrantsManager, 'update', 'resource.patch');
 
-
 /**
  * Delete an Auth0 client grant.
  *
@@ -146,6 +161,5 @@ utils.wrapPropertyMethod(ClientGrantsManager, 'update', 'resource.patch');
  * @return  {Promise|undefined}
  */
 utils.wrapPropertyMethod(ClientGrantsManager, 'delete', 'resource.delete');
-
 
 module.exports = ClientGrantsManager;

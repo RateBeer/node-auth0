@@ -3,20 +3,22 @@ var extend = require('util')._extend;
 var ArgumentError = require('rest-facade').ArgumentError;
 var RestClient = require('rest-facade').Client;
 
+var OAUthWithIDTokenValidation = require('./OAUthWithIDTokenValidation');
 
 /**
  * @class
  * Abstracts the sign-in, sign-up and change-password processes for Database &
- * Active Directory auhtentication services.
+ * Active Directory authentication services.
  * @constructor
  * @memberOf module:auth
  *
  * @param  {Object}              options                Authenticator options.
- * @param  {String}              options.baseUrl        The auth0 account URL.
+ * @param  {String}              options.baseUrl        The Auth0 account URL.
+ * @param  {String}              options.domain         AuthenticationClient server domain
  * @param  {String}              [options.clientId]     Default client ID.
  * @param  {String}              [options.clientSecret] Default client Secret.
  */
-var OAuthAuthenticator = function (options) {
+var OAuthAuthenticator = function(options) {
   if (!options) {
     throw new ArgumentError('Missing authenticator options');
   }
@@ -35,10 +37,10 @@ var OAuthAuthenticator = function (options) {
   };
 
   this.oauth = new RestClient(options.baseUrl + '/oauth/:type', clientOptions);
+  this.oauthWithIDTokenValidation = new OAUthWithIDTokenValidation(this.oauth, options);
   this.clientId = options.clientId;
   this.clientSecret = options.clientSecret;
 };
-
 
 /**
  * Sign in using a username and password.
@@ -58,7 +60,7 @@ var OAuthAuthenticator = function (options) {
  * var data = {
  *   client_id: '{CLIENT_ID}',  // Optional field.
  *   username: '{USERNAME}',
- *   password: '{PASSWORD}
+ *   password: '{PASSWORD}',
  *   connection: '{CONNECTION_NAME}',
  *   scope: 'openid'  // Optional field.
  * };
@@ -78,7 +80,7 @@ var OAuthAuthenticator = function (options) {
  *
  * @return  {Promise|undefined}
  */
-OAuthAuthenticator.prototype.signIn = function (userData, cb) {
+OAuthAuthenticator.prototype.signIn = function(userData, cb) {
   var params = {
     type: 'ro'
   };
@@ -93,17 +95,15 @@ OAuthAuthenticator.prototype.signIn = function (userData, cb) {
     throw new ArgumentError('Missing user data object');
   }
 
-  if (typeof data.connection !== 'string'
-      || data.connection.split().length === 0)
-  {
+  if (typeof data.connection !== 'string' || data.connection.split().length === 0) {
     throw new ArgumentError('connection field is required');
   }
 
   if (cb && cb instanceof Function) {
-    return this.oauth.create(params, data, cb);
+    return this.oauthWithIDTokenValidation.create(params, data, cb);
   }
 
-  return this.oauth.create(params, data);
+  return this.oauthWithIDTokenValidation.create(params, data);
 };
 
 /**
@@ -125,12 +125,12 @@ OAuthAuthenticator.prototype.signIn = function (userData, cb) {
  * var data = {
  *   client_id: '{CLIENT_ID}',  // Optional field.
  *   username: '{USERNAME}',
- *   password: '{PASSWORD}'
+ *   password: '{PASSWORD}',
  *   realm: '{CONNECTION_NAME}', // Optional field.
  *   scope: 'openid'  // Optional field.
  * };
  *
- * auth0.oauth.token(data, function (err, userData) {
+ * auth0.oauth.passwordGrant(data, function (err, userData) {
  *   if (err) {
  *     // Handle error.
  *   }
@@ -145,7 +145,7 @@ OAuthAuthenticator.prototype.signIn = function (userData, cb) {
  *
  * @return  {Promise|undefined}
  */
-OAuthAuthenticator.prototype.passwordGrant = function (userData, cb) {
+OAuthAuthenticator.prototype.passwordGrant = function(userData, cb) {
   var params = {
     type: 'token'
   };
@@ -160,26 +160,77 @@ OAuthAuthenticator.prototype.passwordGrant = function (userData, cb) {
     throw new ArgumentError('Missing user data object');
   }
 
-  if (typeof data.username !== 'string'
-      || data.username.split().length === 0) {
+  if (typeof data.username !== 'string' || data.username.split().length === 0) {
     throw new ArgumentError('username field is required');
   }
 
-  if (typeof data.password !== 'string'
-      || data.password.split().length === 0) {
+  if (typeof data.password !== 'string' || data.password.split().length === 0) {
     throw new ArgumentError('password field is required');
   }
 
-  if (typeof data.realm === 'string'
-      && data.realm.split().length !== 0) {
+  if (typeof data.realm === 'string' && data.realm.split().length !== 0) {
     data.grant_type = 'http://auth0.com/oauth/grant-type/password-realm';
   }
 
   if (cb && cb instanceof Function) {
-    return this.oauth.create(params, data, cb);
+    return this.oauthWithIDTokenValidation.create(params, data, cb);
   }
 
-  return this.oauth.create(params, data);
+  return this.oauthWithIDTokenValidation.create(params, data);
+};
+
+/**
+ * Sign in using a refresh token
+ *
+ * @method    refreshToken
+ * @memberOf  module:auth.OAuthAuthenticator.prototype
+ *
+ * @example <caption>
+ *   Given a refresh token from a previous authentication request
+ *   it will return a JSON with the access_token and id_token.
+ *   More information in the
+ *   <a href="https://auth0.com/docs/api/authentication#refresh-token">
+ *     API Docs
+ *   </a>.
+ * </caption>
+ *
+ * var data = {
+ *   client_id: '{CLIENT_ID}', // Optional field.
+ *   refresh_token: '{REFRESH_TOKEN}',
+ * };
+ *
+ * auth0.oauth.refreshToken(data, function (err, userData) {
+ *   if (err) {
+ *     // Handle error.
+ *   }
+ *
+ *   console.log(userData);
+ * });
+ *
+ * @param   {Object}    userData                User credentials object.
+ * @param   {String}    userData.refresh_token  Refresh token.
+ *
+ * @return  {Promise|undefined}
+ */
+OAuthAuthenticator.prototype.refreshToken = function(userData, cb) {
+  var params = {
+    type: 'token'
+  };
+  var defaultFields = {
+    client_id: this.clientId,
+    grant_type: 'refresh_token'
+  };
+  var data = extend(defaultFields, userData);
+  if (!userData || typeof userData !== 'object') {
+    throw new ArgumentError('Missing user data object');
+  }
+  if (typeof data.refresh_token !== 'string' || data.refresh_token.split().length === 0) {
+    throw new ArgumentError('refresh_token is required');
+  }
+  if (cb && cb instanceof Function) {
+    return this.oauthWithIDTokenValidation.create(params, data, cb);
+  }
+  return this.oauthWithIDTokenValidation.create(params, data);
 };
 
 /**
@@ -194,7 +245,7 @@ OAuthAuthenticator.prototype.passwordGrant = function (userData, cb) {
  *
  * @return  {Promise|undefined}
  */
-OAuthAuthenticator.prototype.socialSignIn = function (data, cb) {
+OAuthAuthenticator.prototype.socialSignIn = function(data, cb) {
   var params = {
     type: 'access_token'
   };
@@ -203,13 +254,11 @@ OAuthAuthenticator.prototype.socialSignIn = function (data, cb) {
     throw new ArgumentError('Missing user credential objects');
   }
 
-  if (typeof data.access_token !== 'string'
-      || data.access_token.trim().length === 0) {
+  if (typeof data.access_token !== 'string' || data.access_token.trim().length === 0) {
     throw new ArgumentError('access_token field is required');
   }
 
-  if (typeof data.connection !== 'string'
-      || data.connection.trim().length === 0) {
+  if (typeof data.connection !== 'string' || data.connection.trim().length === 0) {
     throw new ArgumentError('connection field is required');
   }
 
@@ -221,15 +270,14 @@ OAuthAuthenticator.prototype.socialSignIn = function (data, cb) {
 };
 
 OAuthAuthenticator.prototype.clientCredentialsGrant = function(options, cb) {
-
   var params = {
     type: 'token'
   };
 
   var defaultFields = {
-    grant_type:     "client_credentials",
-    client_id:      this.clientId,
-    client_secret:  this.clientSecret
+    grant_type: 'client_credentials',
+    client_id: this.clientId,
+    client_secret: this.clientSecret
   };
 
   var data = extend(defaultFields, options);
@@ -251,6 +299,75 @@ OAuthAuthenticator.prototype.clientCredentialsGrant = function(options, cb) {
   }
 
   return this.oauth.create(params, data);
+};
+
+/**
+ * Sign in using an authorization code
+ *
+ * @method    authorizationCodeGrant
+ * @memberOf  module:auth.OAuthAuthenticator.prototype
+ *
+ * @example <caption>
+ *   Given the code returned in the URL params after the redirect
+ *   from successful authentication, exchange the code for auth0
+ *   credentials. It will return JSON with the access_token and id_token.
+ *   More information in the
+ *   <a href="https://auth0.com/docs/api/authentication#authorization-code-grant">
+ *     API Docs
+ *   </a>.
+ * </caption>
+ *
+ * var data = {
+ *   code: '{CODE}',
+ *   redirect_uri: '{REDIRECT_URI}',
+ *   client_id: '{CLIENT_ID}',  // Optional field.
+ *   client_secret: '{CLIENT_SECRET}',  // Optional field.
+ * };
+ *
+ * auth0.oauth.authorizationCodeGrant(data, function (err, userData) {
+ *   if (err) {
+ *     // Handle error.
+ *   }
+ *
+ *   console.log(userData);
+ * });
+ *
+ * @param   {Object}    data                  Authorization code payload
+ * @param   {String}    userData.code         Code in URL returned after authentication
+ * @param   {String}    userData.redirect_uri The URL to which Auth0 will redirect the browser after authorization has been granted by the user.
+ *
+ * @return  {Promise|undefined}
+ */
+OAuthAuthenticator.prototype.authorizationCodeGrant = function(options, cb) {
+  var params = {
+    type: 'token'
+  };
+
+  var defaultFields = {
+    grant_type: 'authorization_code',
+    client_id: this.clientId,
+    client_secret: this.clientSecret
+  };
+
+  var data = extend(defaultFields, options);
+
+  if (!options || typeof options !== 'object') {
+    throw new ArgumentError('Missing options object');
+  }
+
+  if (!data.code || data.code.trim().length === 0) {
+    throw new ArgumentError('code field is required');
+  }
+
+  if (!data.redirect_uri || data.redirect_uri.trim().length === 0) {
+    throw new ArgumentError('redirect_uri field is required');
+  }
+
+  if (cb && cb instanceof Function) {
+    return this.oauthWithIDTokenValidation.create(params, data, cb);
+  }
+
+  return this.oauthWithIDTokenValidation.create(params, data);
 };
 
 module.exports = OAuthAuthenticator;

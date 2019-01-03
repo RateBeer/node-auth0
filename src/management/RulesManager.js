@@ -9,7 +9,6 @@ var RetryRestClient = require('../RetryRestClient');
  * @see https://github.com/ngonzalvez/rest-facade
  */
 
-
 /**
  * @class RulesManager
  * The rule class provides a simple abstraction for performing CRUD operations
@@ -22,7 +21,7 @@ var RetryRestClient = require('../RetryRestClient');
  * @param {Object} [options.headers]  Headers to be included in all requests.
  * @param {Object} [options.retry]    Retry Policy Config
  */
-var RulesManager = function (options) {
+var RulesManager = function(options) {
   if (options === null || typeof options !== 'object') {
     throw new ArgumentError('Must provide manager options');
   }
@@ -51,10 +50,13 @@ var RulesManager = function (options) {
    *
    * @type {external:RestClient}
    */
-  var auth0RestClient = new Auth0RestClient(options.baseUrl + '/rules/:id', clientOptions, options.tokenProvider);
+  var auth0RestClient = new Auth0RestClient(
+    options.baseUrl + '/rules/:id',
+    clientOptions,
+    options.tokenProvider
+  );
   this.resource = new RetryRestClient(auth0RestClient, options.retry);
 };
-
 
 /**
  * Create a new rule.
@@ -78,24 +80,36 @@ var RulesManager = function (options) {
  */
 utils.wrapPropertyMethod(RulesManager, 'create', 'resource.create');
 
-
 /**
  * Get all rules.
  *
  * @method    getAll
  * @memberOf  module:management.RulesManager.prototype
  *
- * @example
- * management.rules.getAll(function (err, rules) {
+ * @example <caption>
+ *   This method takes an optional object as first argument that may be used to
+ *   specify pagination settings. If pagination options are not present,
+ *   the first page of a limited number of results will be returned.
+ * </caption>
+ *
+ * // Pagination settings.
+ * var params = {
+ *   per_page: 10,
+ *   page: 0
+ * };
+ *
+ * management.rules.getAll(params, function (err, rules) {
  *   console.log(rules.length);
  * });
  *
- * @param   {Function}  [cb]     Callback function.
+ * @param   {Object}    [params]          Rules parameters.
+ * @param   {Number}    [params.per_page] Number of results per page.
+ * @param   {Number}    [params.page]     Page number, zero indexed.
+ * @param   {Function}  [cb]              Callback function.
  *
  * @return  {Promise|undefined}
  */
 utils.wrapPropertyMethod(RulesManager, 'getAll', 'resource.getAll');
-
 
 /**
  * Get an Auth0 rule.
@@ -119,7 +133,6 @@ utils.wrapPropertyMethod(RulesManager, 'getAll', 'resource.getAll');
  * @return  {Promise|undefined}
  */
 utils.wrapPropertyMethod(RulesManager, 'get', 'resource.get');
-
 
 /**
  * Update an existing rule.
@@ -158,7 +171,6 @@ utils.wrapPropertyMethod(RulesManager, 'get', 'resource.get');
  */
 utils.wrapPropertyMethod(RulesManager, 'update', 'resource.patch');
 
-
 /**
  * Delete an existing rule.
  *
@@ -181,6 +193,5 @@ utils.wrapPropertyMethod(RulesManager, 'update', 'resource.patch');
  * @return  {Promise|undefined}
  */
 utils.wrapPropertyMethod(RulesManager, 'delete', 'resource.delete');
-
 
 module.exports = RulesManager;

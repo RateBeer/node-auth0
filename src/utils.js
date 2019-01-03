@@ -1,12 +1,10 @@
 var Promise = require('bluebird');
 var base64 = require('base-64');
 
-
 /**
  * @module utils
  */
-var utils = module.exports = {};
-
+var utils = (module.exports = {});
 
 /**
  * Given a JSON string, convert it to its base64 representation.
@@ -21,7 +19,6 @@ utils.jsonToBase64 = function (json) {
     .replace(/=+$/, '');
 };
 
-
 /**
  * Simple wrapper that, given a class, a property name and a method name,
  * creates a new method in the class that is a wrapper for the given
@@ -30,19 +27,18 @@ utils.jsonToBase64 = function (json) {
  * @method    wrapPropertyMethod
  * @memberOf  module:utils
  */
-utils.wrapPropertyMethod = function (Parent, name, propertyMethod) {
+utils.wrapPropertyMethod = function(Parent, name, propertyMethod) {
   var path = propertyMethod.split('.');
   var property = path.shift();
   var method = path.pop();
 
   Object.defineProperty(Parent.prototype, name, {
     enumerable: false,
-    get: function () {
+    get: function() {
       return this[property][method].bind(this[property]);
     }
   });
 };
-
 
 /**
  * Perform a request with the given settings and return a promise that resolves
@@ -66,4 +62,4 @@ utils.getRequestPromise = function (settings) {
       resolve(res.body);
     });
   });
-}
+};

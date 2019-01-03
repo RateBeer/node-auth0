@@ -21,7 +21,7 @@ var RetryRestClient = require('../RetryRestClient');
  * @param {Object} [options.retry]    Retry Policy Config
  */
 
-var ResourceServersManager = function (options) {
+var ResourceServersManager = function(options) {
   if (options === null || typeof options !== 'object') {
     throw new ArgumentError('Must provide resource server options');
   }
@@ -50,7 +50,11 @@ var ResourceServersManager = function (options) {
    *
    * @type {external:RestClient}
    */
-  var auth0RestClient = new Auth0RestClient(options.baseUrl + '/resource-servers/:id', clientOptions, options.tokenProvider);
+  var auth0RestClient = new Auth0RestClient(
+    options.baseUrl + '/resource-servers/:id',
+    clientOptions,
+    options.tokenProvider
+  );
   this.resource = new RetryRestClient(auth0RestClient, options.retry);
 };
 
@@ -82,17 +86,30 @@ utils.wrapPropertyMethod(ResourceServersManager, 'create', 'resource.create');
  * @method    getAll
  * @memberOf  module:management.ResourceServersManager.prototype
  *
- * @example
- * management.resourceServers.getAll(function (err, resourceServers) {
+ * @example <caption>
+ *   This method takes an optional object as first argument that may be used to
+ *   specify pagination settings. If pagination options are not present,
+ *   the first page of a limited number of results will be returned.
+ * </caption>
+ *
+ * // Pagination settings.
+ * var params = {
+ *   per_page: 10,
+ *   page: 0
+ * };
+ *
+ * management.resourceServers.getAll(params, function (err, resourceServers) {
  *   console.log(resourceServers.length);
  * });
  *
- * @param   {Function}  [cb]    Callback function.
+ * @param   {Object}    [params]          Resource Servers parameters.
+ * @param   {Number}    [params.per_page] Number of results per page.
+ * @param   {Number}    [params.page]     Page number, zero indexed.
+ * @param   {Function}  [cb]              Callback function.
  *
  * @return  {Promise|undefined}
  */
 utils.wrapPropertyMethod(ResourceServersManager, 'getAll', 'resource.getAll');
-
 
 /**
  * Get a Resource Server.
